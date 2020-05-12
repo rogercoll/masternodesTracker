@@ -3,7 +3,6 @@ package db
 
 import (
 	"os"
-	"log"
 	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,7 +16,7 @@ type Masternode struct {
     ApiEndpoint 	string  `bson:"apiendpoint" json:apiendpoint`
 	RegexBalance 	string  `bson:"regexbalance" json:regexbalance` //to get the balance in case the API is different
 	LastCheck		uint64	`bson:"lastcheck" json:lastcheck`
-	LastHash		string	`bson:"lastHash" json:lasthash`
+	LastHash		string	`bson:"lasthash" json:lasthash`
 }
 
 var (
@@ -76,10 +75,9 @@ func UpdateCoinInfo(c *mongo.Client, publickey string, new *Masternode) error {
 	update := bson.M {
 		"$set": *new,
 	}
-	result, err := meska.UpdateOne(ctx, bson.D{{"publickey", publickey}}, update)
+	_, err := meska.UpdateOne(ctx, bson.D{{"publickey", publickey}}, update)
 	if err != nil {
 		return err
 	}
-	log.Println(result)
 	return nil
 }

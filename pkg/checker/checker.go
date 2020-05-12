@@ -77,16 +77,11 @@ func Check2() {
 		if actualHash !=  master.LastHash {
 			log.Printf("Masternode with public key %v has new transactions", master.PublicKey)
 			log.Printf("Masternode balance: %s", balance)
-			newInfo := db.Masternode{
-				Coin: master.Coin,
-				PublicKey: master.PublicKey,
-				ApiEndpoint: master.ApiEndpoint,
-				RegexBalance: master.RegexBalance,
-				LastHash: actualHash,
-				LastCheck: uint64(time.Now().Unix()),
-			}
-			err = db.UpdateCoinInfo(c, master.PublicKey, &newInfo)
+			master.LastHash = actualHash
+			master.LastCheck = uint64(time.Now().Unix())
+			err = db.UpdateCoinInfo(c, master.PublicKey, &master)
 			if err != nil { log.Fatal(err)}
+			log.Println("MongoDB document updated")
 		}
 	}
 }
