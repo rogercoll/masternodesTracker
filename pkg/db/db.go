@@ -3,6 +3,7 @@ package db
 
 import (
 	"os"
+	"log"
 	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,9 +12,12 @@ import (
 )
 
 type Masternode struct {
-    Coin string `bson:"coin" json:"coin"`
-    Url string `bson:"url" json:url`
-    Regex string `bson:"regex" json:regex`
+	Coin 			string  `bson:"coin" json:"coin"`
+	PublicKey		string	`bson:"publickey" json:"publickey"`
+    ApiEndpoint 	string  `bson:"apiendpoint" json:apiendpoint`
+	RegexBalance 	string  `bson:"regexbalance" json:regexbalance` //to get the balance in case the API is different
+	LastCheck		uint64	`bson:"lastcheck" json:lastcheck`
+	LastHash		string	`bson:"lastHash" json:lasthash`
 }
 
 var (
@@ -53,7 +57,8 @@ func GetCoinInfo(c *mongo.Client, coin string) (*[]Masternode, error) {
 	defer cancel()
 	mdb := c.Database(database)
 	meska := mdb.Collection(collection)
-	cursor, err := meska.Find(ctx, bson.D{{"coin", coin}})
+	//filter bson.D{{"coin", coin}}
+	cursor, err := meska.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +66,20 @@ func GetCoinInfo(c *mongo.Client, coin string) (*[]Masternode, error) {
 		return nil, err
 	}
 	return &masternodes, nil
+}
+
+func UpdateCoinInfo(c *mongo.Client, publickey string, new *Masternode) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	mdb := c.Database(database)
+	meska := mdb.Collection(collection)
+	update := bson.M {
+		"$set": *new,
+	}
+	result, err := meska.UpdateOne(ctx, bson.D{{"publickey", publickey}}, update)
+	if err != nil {
+		return err
+	}
+	log.Println(result)
+	return nil
 }
