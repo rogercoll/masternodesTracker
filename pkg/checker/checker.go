@@ -4,6 +4,7 @@ package checker
 import (
 	"io"
 	"log"
+	"fmt"
 	"time"
 	"regexp"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 	"crypto/sha256"
 	"github.com/rogercoll/masternodesTracker/pkg/db"
 
+)
+
+const (
+    // See http://golang.org/pkg/time/#Parse
+    timeFormat = "2006-01-02 15:04 MST"
 )
 
 func Check(url, regex string) (bool, error) {
@@ -72,16 +78,20 @@ func Check2() {
 	mcoins, err := db.GetCoinInfo(c, "iqcash")
 	if err != nil { log.Fatal(err)}
 	for _, master := range *mcoins {
+		fmt.Printf("Coin: %s     PublicKey: %s\n", master.Coin, master.PublicKey)
+		diff := time.Now().Sub(time.Unix(master.LastCheck,0))
+		fmt.Printf("Time since last check: %2.f days %.f hours %.f minutes\n", diff.Hours()/24, diff.Hours(), diff.Minutes())
 		balance,actualHash, err := getActual(master.ApiEndpoint, master.RegexBalance)
 		if err != nil { log.Fatal(err)}
+		fmt.Printf("Actual balance: %s", balance)
 		if actualHash !=  master.LastHash {
 			log.Printf("Masternode with public key %v has new transactions", master.PublicKey)
-			log.Printf("Masternode balance: %s", balance)
 			master.LastHash = actualHash
-			master.LastCheck = uint64(time.Now().Unix())
+			master.LastCheck = int64(time.Now().Unix())
 			err = db.UpdateCoinInfo(c, master.PublicKey, &master)
 			if err != nil { log.Fatal(err)}
 			log.Println("MongoDB document updated")
 		}
+		fmt.Println("		======		======		======		")
 	}
 }

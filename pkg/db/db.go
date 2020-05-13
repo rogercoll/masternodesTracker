@@ -15,7 +15,7 @@ type Masternode struct {
 	PublicKey		string	`bson:"publickey" json:"publickey"`
     ApiEndpoint 	string  `bson:"apiendpoint" json:apiendpoint`
 	RegexBalance 	string  `bson:"regexbalance" json:regexbalance` //to get the balance in case the API is different
-	LastCheck		uint64	`bson:"lastcheck" json:lastcheck`
+	LastCheck		int64	`bson:"lastcheck" json:lastcheck`
 	LastHash		string	`bson:"lasthash" json:lasthash`
 }
 
