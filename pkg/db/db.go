@@ -5,18 +5,20 @@ import (
 	"os"
 	"time"
 	"context"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Masternode struct {
-	Coin 			string  `bson:"coin" json:"coin"`
-	PublicKey		string	`bson:"publickey" json:"publickey"`
-    ApiEndpoint 	string  `bson:"apiendpoint" json:apiendpoint`
-	RegexBalance 	string  `bson:"regexbalance" json:regexbalance` //to get the balance in case the API is different
-	LastCheck		int64	`bson:"lastcheck" json:lastcheck`
-	LastHash		string	`bson:"lasthash" json:lasthash`
+	Coin 			string  `bson:"coin" yaml:"coin"`
+	PublicKey		string	`bson:"publickey" yaml:"publickey"`
+    ApiEndpoint 	string  `bson:"apiendpoint" yaml:apiendpoint`
+	RegexBalance 	string  `bson:"regexbalance" yaml:regexbalance` //to get the balance in case the API is different
+	LastCheck		int64	`bson:"lastcheck" yaml:lastcheck`
+	LastHash		string	`bson:"lasthash" yaml:lasthash`
 }
 
 var (
@@ -38,7 +40,7 @@ func NewMongoClient() (*mongo.Client, error) {
 	return client, nil
 }
 
-func NewEntry(c *mongo.Client, masternode *Masternode) (interface{}, error) {
+func newEntry(c *mongo.Client, masternode *Masternode) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	mdb := c.Database(database)
@@ -48,6 +50,32 @@ func NewEntry(c *mongo.Client, masternode *Masternode) (interface{}, error) {
 		return nil, err
 	}
 	return result.InsertedID, nil
+}
+
+func InsertFromFile(filePath string) (int, error) {
+	//returns the amount of inserted items
+	c, err := NewMongoClient()
+	if err != nil {
+		return 0, err
+	}
+	yamlFile, err := ioutil.ReadFile(filePath)
+    if err != nil {
+		return 0, err
+	}
+	var allMasternodes map[string]Masternode
+    err = yaml.Unmarshal(yamlFile, &allMasternodes)
+    if err != nil {
+		return 0, err
+	}
+	i := 0
+	for _, v := range allMasternodes { 
+		_, err := newEntry(c,&v)
+		if err != nil {
+			return i, err
+		}
+		i++
+	}
+	return i, nil
 }
 
 func GetCoinInfo(c *mongo.Client, coin string) (*[]Masternode, error) {
