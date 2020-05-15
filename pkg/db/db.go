@@ -14,6 +14,7 @@ import (
 
 type Masternode struct {
 	Coin 			string  `bson:"coin" yaml:"coin"`
+	Balance 		string	`bson:"balance" yaml:"balance"`
 	PublicKey		string	`bson:"publickey" yaml:"publickey"`
     ApiEndpoint 	string  `bson:"apiendpoint" yaml:apiendpoint`
 	RegexBalance 	string  `bson:"regexbalance" yaml:regexbalance` //to get the balance in case the API is different

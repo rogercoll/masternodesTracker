@@ -89,6 +89,7 @@ func Check2() {
 		fmt.Printf("\033[1;33mCoin: %s     PublicKey: %s\033[0m\n", master.Coin, master.PublicKey)
 		diff := time.Now().Sub(time.Unix(master.LastCheck,0))
 		fmt.Printf("Time since last check: %2.f days %.f hours %.f minutes\n", diff.Hours()/24, diff.Hours(), diff.Minutes())
+		fmt.Printf("Last checked balance: %s\n", master.Balance)
 		balance,actualHash, err := getActual(master.ApiEndpoint, master.RegexBalance)
 		if err != nil { log.Fatal(err)}
 		fmt.Printf("Actual balance: %s\n", balance)
@@ -96,6 +97,7 @@ func Check2() {
 			fmt.Printf("Masternode with public key %v has new transactions\n", master.PublicKey)
 			master.LastHash = actualHash
 			master.LastCheck = int64(time.Now().Unix())
+			master.Balance = balance
 			err = db.UpdateCoinInfo(c, master.PublicKey, &master)
 			if err != nil { log.Fatal(err)}
 			fmt.Printf(NoticeColor + "\n", "MongoDB document updated")
